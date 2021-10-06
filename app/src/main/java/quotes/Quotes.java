@@ -1,8 +1,5 @@
 package quotes;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class Quotes {
     String[] tags;
     String author;

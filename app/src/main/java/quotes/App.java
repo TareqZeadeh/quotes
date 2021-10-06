@@ -7,30 +7,74 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Random;
 
 public class App {
 
     public static void main(String[] args) {
-        Path path = Paths.get("C:\\Users\\STUDENT\\java-401\\quotes\\app\\src\\main\\resources\\recentquotes.json");
-        List<Quotes> quotes = jsonParser(path);
-        System.out.println(quotes);
+        String url = "http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en";
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(5000);
+            int connectionCode = connection.getResponseCode();
+            if (connectionCode == HttpURLConnection.HTTP_OK) {
+                System.out.println(APIQuotesGetter(connection));
+                connection.disconnect();
+            } else if (connectionCode == HttpURLConnection.HTTP_INTERNAL_ERROR) {
+                System.out.println("Internal Server Error.");
+                Path path = Paths.get("app/src/main/resources/recentquotes.json");
+                List<Quotes> quotes = jsonParser(path);
+                System.out.println(randomBook(quotes));
+
+            } else {
+                System.out.println("Something went wrong");
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
+    public static APIQuotes APIQuotesGetter(HttpURLConnection connection) {
+        APIQuotes apiQuote = null;
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("app/src/main/resources/APIQuotes.json"))) {
+            InputStreamReader inputStreamReader = new InputStreamReader(connection.getInputStream());
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            Gson gson = new GsonBuilder().create();
+            String str = bufferedReader.readLine();
+            apiQuote = gson.fromJson(str, APIQuotes.class);
+            gson.toJson(apiQuote, writer);
 
+            return apiQuote;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return apiQuote;
+    }
+
+    public static Quotes randomBook(List<Quotes> quotes) {
+        Random random = new Random();
+        int randomIndex = random.nextInt(quotes.size() + 1);
+        return quotes.get(randomIndex);
+    }
 
     public static List<Quotes> jsonParser(Path path) {
         List<Quotes> quotes = null;
         final Type REVIEW_TYPE = new TypeToken<List<Quotes>>() {
         }.getType();
+        System.out.println(REVIEW_TYPE);
+        System.out.println(Quotes.class);
         try (
-                BufferedReader bufferedReader = Files.newBufferedReader(path);
+                BufferedReader bufferedReader = Files.newBufferedReader(path)
         ) {
 
             GsonBuilder gsonBuilder = new GsonBuilder();

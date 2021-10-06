@@ -4,11 +4,19 @@
 package quotes;
 
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class AppTest {
-    @Test void appHasAGreeting() {
-        App classUnderTest = new App();
-        assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+    @Test void GSONTest() {
+        // Relative Path : "app/src/main/resources/recentquotes.json" --- "DOSE NOT WORK HER"
+        Path path = Paths.get("app/src/main/resources/recentquotes.json");
+        List<Quotes> quotes= App.jsonParser(path);
+        assertEquals(quotes.size() ,App.jsonParser(path).size());
+
     }
 }
